@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --board:#284636;
+    --board-2:#101914;
+    --board-3:#1a2620;
+    --chalk-white:#f4f1e7;
+    --chalk-yellow:#c99f35;
+    --chalk-blue:#628aab;
+    --chalk-pink:#d98fa0;
+    --wood:#ff6a00;
+    --wood-dark:#051362;
+    --muted:#9bd8b4;
+    --line: rgba(244,241,231,0.14);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--wood-dark);
+    color: var(--chalk-white);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding: 28px 16px 60px;
+  }
+  a{color:inherit;}
+
+  .desk{
+    width:100%;
+    max-width: 920px;
+  }
+
+  /* header: wood frame */
+  header.frame{
+    background: linear-gradient(180deg, var(--wood), var(--wood-dark));
+    border-radius: 14px;
+    padding: 22px 26px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 16px;
+    box-shadow: 0 0 0 4px var(--wood-dark) inset;
+    flex-wrap: wrap;
+  }
+  header.frame h1{
+    font-family:'Kalam',cursive;
+    font-weight:700;
+    font-size: 2rem;
+    margin:0;
+    letter-spacing: 0.5px;
+    color: var(--chalk-white);
+  }
+  header.frame h1 span{color: var(--chalk-yellow);}
+  .clockbox{
+    text-align:right;
+    font-variant-numeric: tabular-nums;
+  }
+  .clockbox .time{
+    font-size:1.4rem;
+    font-weight:600;
+  }
+  .clockbox .date{
+    font-size:0.82rem;
+    color: var(--muted);
+  }
+
+  /* chalk tab nav */
+  nav.tabs{
+    display:flex;
+    gap: 4px;
+    margin: 22px 4px 0;
+    overflow-x:auto;
+    position:relative;
+    border-bottom: 1px solid var(--line);
+  }
+  nav.tabs button{
+    background:none;
+    border:none;
+    color: var(--muted);
+    font-family:'Kalam',cursive;
+    font-size: 1.05rem;
+    padding: 10px 16px 14px;
+    cursor:pointer;
+    white-space:nowrap;
+    position:relative;
+    transition: color .2s ease;
+  }
+  nav.tabs button:hover{ color: var(--chalk-white); }
+  nav.tabs button.active{ color: var(--chalk-yellow); }
+  #tab-underline{
+    position:absolute;
+    bottom:-1px;
+    height:3px;
+    background: var(--chalk-yellow);
+    border-radius: 2px;
+    transition: left .28s cubic-bezier(.4,0,.2,1), width .28s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* board panel */
+  main.board{
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(255,255,255,0.03), transparent 40%),
+      linear-gradient(180deg, var(--board), var(--board-2));
+    border-radius: 0 0 14px 14px;
+    padding: 30px 28px 26px;
+    min-height: 420px;
+    box-shadow: 0 0 0 4px var(--board-3) inset;
+  }
+  section.tool{ display:none; }
+  section.tool.active{ display:block; animation: chalkin .35s ease; }
+  @keyframes chalkin{ from{opacity:0; transform: translateY(4px);} to{opacity:1; transform:none;} }
+
+  h2.tool-title{
+    font-family:'Kalam',cursive;
+    font-size:1.5rem;
+    margin: 0 0 4px;
+    color: var(--chalk-white);
+  }
+  p.tool-sub{
+    color: var(--muted);
+    margin: 0 0 22px;
+    font-size: 0.92rem;
+    max-width: 60ch;
+  }
+
+  /* generic pieces */
+  .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .col{ display:flex; flex-direction:column; gap:10px; }
+  input[type=text], input[type=number], textarea, select{
+    background: var(--board-3);
+    border: 1px solid var(--line);
+    color: var(--chalk-white);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family:'Inter',sans-serif;
+    font-size: 0.92rem;
+  }
+  input:focus, textarea:focus, select:focus{
+    outline: 2px solid var(--chalk-yellow);
+    outline-offset: 1px;
+  }
+  textarea{ resize: vertical; min-height: 90px; }
+  button.btn{
+    background: transparent;
+    border: 1.5px solid var(--chalk-yellow);
+    color: var(--chalk-yellow);
+    padding: 9px 16px;
+    border-radius: 8px;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size: 0.86rem;
+    cursor:pointer;
+    transition: background .15s ease, color .15s ease;
+  }
+  button.btn:hover{ background: var(--chalk-yellow); color: var(--board-3); }
+  button.btn.ghost{ border-color: var(--line); color: var(--muted); }
+  button.btn.ghost:hover{ background: var(--line); color: var(--chalk-white); }
+  button.btn.pink{ border-color: var(--chalk-pink); color: var(--chalk-pink); }
+  button.btn.pink:hover{ background: var(--chalk-pink); color: var(--board-3); }
+  button.icon-x{
+    background:none; border:none; color: var(--muted); cursor:pointer; font-size:1.05rem; line-height:1;
+    padding: 4px 6px;
+  }
+  button.icon-x:hover{ color: var(--chalk-pink); }
+
+  /* dashboard */
+  .stat-grid{ display:flex; gap:16px; flex-wrap:wrap; margin-top: 6px; }
+  .stat{
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    padding: 14px 18px;
+    min-width: 150px;
+    flex: 1;
+  }
+  .stat .num{ font-size:1.6rem; font-weight:700; color: var(--chalk-yellow); font-family:'Kalam',cursive; }
+  .stat .lbl{ font-size:0.8rem; color: var(--muted); margin-top:2px; }
+  .quote{
+    margin-top: 26px;
+    font-family:'Kalam',cursive;
+    font-size: 1.15rem;
+    color: var(--chalk-blue);
+    border-left: 3px solid var(--chalk-blue);
+    padding-left: 14px;
+  }
+
+  /* timer */
+  .timer-wrap{ display:flex; flex-direction:column; align-items:center; gap: 18px; padding: 10px 0 6px; }
+  .timer-ring{ position:relative; width:220px; height:220px; }
+  .timer-ring svg{ transform: rotate(-90deg); width:100%; height:100%; }
+  .timer-ring .track{ fill:none; stroke: var(--line); stroke-width:8; }
+  .timer-ring .progress{ fill:none; stroke: var(--chalk-yellow); stroke-width:8; stroke-linecap:round; transition: stroke-dashoffset 1s linear; }
+  .timer-display{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  .timer-display .t{ font-size: 2.6rem; font-weight:700; font-variant-numeric: tabular-nums; }
+  .timer-display .mode{ font-size:0.8rem; color: var(--muted); text-transform: lowercase; margin-top:2px; }
+  .timer-controls{ display:flex; gap:10px; }
+  .timer-meta{ color: var(--muted); font-size:0.85rem; }
+
+  /* tasks */
+  ul.tasklist{ list-style:none; padding:0; margin: 18px 0 0; display:flex; flex-direction:column; gap:8px; }
+  ul.tasklist li{
+    display:flex; align-items:center; gap:10px;
+    padding: 10px 12px; border-radius:8px; background: var(--board-3);
+    border: 1px solid transparent;
+  }
+  ul.tasklist li.done .txt{ text-decoration: line-through; color: var(--muted); }
+  ul.tasklist li input[type=checkbox]{ width:18px; height:18px; accent-color: var(--chalk-yellow); cursor:pointer; }
+  ul.tasklist li .txt{ flex:1; word-break: break-word; }
+  .filter-row{ margin-top:14px; display:flex; gap:8px; }
+  .filter-row button.small{
+    background:none; border:1px solid var(--line); color: var(--muted);
+    padding: 5px 12px; border-radius: 20px; font-size:0.78rem; cursor:pointer;
+  }
+  .filter-row button.small.active{ border-color: var(--chalk-yellow); color: var(--chalk-yellow); }
+  .empty{ color: var(--muted); font-size:0.88rem; font-style:italic; margin-top:14px; }
+
+  /* notes */
+  .notes-layout{ display:flex; gap:20px; margin-top:16px; flex-wrap:wrap; }
+  .notes-list{ flex: 1 1 220px; display:flex; flex-direction:column; gap:8px; max-height: 420px; overflow-y:auto; }
+  .note-item{
+    padding: 10px 12px; border-radius:8px; background: var(--board-3); cursor:pointer; border:1px solid transparent;
+  }
+  .note-item.active{ border-color: var(--chalk-yellow); }
+  .note-item .nt{ font-weight:600; font-size:0.9rem; }
+  .note-item .nd{ font-size:0.72rem; color: var(--muted); margin-top:2px; }
+  .note-editor{ flex: 2 1 320px; display:flex; flex-direction:column; gap:10px; }
+
+  /* flashcards */
+  .flash-form{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom: 20px; }
+  .flash-form input{ flex:1; min-width:140px; }
+  .flash-stage{ display:flex; flex-direction:column; align-items:center; gap:16px; }
+  .card3d{ width: 100%; max-width: 420px; height: 220px; perspective: 1000px; cursor:pointer; }
+  .card3d-inner{
+    position:relative; width:100%; height:100%; transition: transform .5s;
+    transform-style: preserve-3d;
+  }
+  .card3d.flipped .card3d-inner{ transform: rotateY(180deg); }
+  .card-face{
+    position:absolute; inset:0; backface-visibility:hidden;
+    border-radius:12px; display:flex; align-items:center; justify-content:center;
+    padding: 20px; text-align:center; font-family:'Kalam',cursive; font-size:1.3rem;
+    border: 1px solid var(--line);
+  }
+  .card-front{ background: var(--board-3); color: var(--chalk-white); }
+  .card-back{ background: var(--chalk-yellow); color: var(--board-3); transform: rotateY(180deg); }
+  .flash-nav{ display:flex; gap:14px; align-items:center; }
+  .flash-progress{ color: var(--muted); font-size:0.85rem; }
+  .flash-list{ margin-top:22px; display:flex; flex-direction:column; gap:6px; }
+  .flash-list .fl-item{ display:flex; justify-content:space-between; gap:10px; padding:8px 10px; background:var(--board-3); border-radius:8px; font-size:0.85rem; }
+
+  /* grades */
+  table.grades{ width:100%; border-collapse: collapse; margin-top:16px; }
+  table.grades th{ text-align:left; font-size:0.75rem; color: var(--muted); font-weight:600; padding-bottom:8px; border-bottom: 1px solid var(--line); }
+  table.grades td{ padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align:middle; }
+  table.grades input, table.grades select{ width:100%; }
+  .gpa-result{
+    margin-top: 22px; display:flex; align-items:baseline; gap:10px;
+    font-family:'Kalam',cursive;
+  }
+  .gpa-result .val{ font-size: 2.2rem; color: var(--chalk-yellow); }
+  .gpa-result .lbl{ color: var(--muted); font-size:0.9rem; }
+
+  footer.note{
+    text-align:center; color: var(--muted); font-size: 0.76rem; margin-top: 18px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation: none !important; transition: none !important; }
+  }
+
+  @media (max-width: 560px){
+    header.frame{ flex-direction:column; align-items:flex-start; }
+    .clockbox{ text-align:left; }
+    main.board{ padding: 22px 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="desk">
+
+  <header class="frame">
+    <h1>Study <span>Desk</span></h1>
+    <div class="clockbox">
+      <div class="time" id="clockTime">--:--:--</div>
+      <div class="date" id="clockDate">-</div>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button data-tab="dashboard" class="active">Dashboard</button>
+    <button data-tab="timer">Timer</button>
+    <button data-tab="tasks">Tasks</button>
+    <button data-tab="notes">Notes</button>
+    <button data-tab="flashcards">Flashcards</button>
+    <button data-tab="grades">Grades</button>
+    <div id="tab-underline"></div>
+  </nav>
+
+  <main class="board">
+
+    <!-- DASHBOARD -->
+    <section class="tool active" id="tool-dashboard">
+      <h2 class="tool-title" id="greeting">Hey there.</h2>
+      <p class="tool-sub">Here's where things stand right now.</p>
+      <div class="stat-grid">
+        <div class="stat"><div class="num" id="statTasks">0</div><div class="lbl">tasks left to do</div></div>
+        <div class="stat"><div class="num" id="statNotes">0</div><div class="lbl">notes saved</div></div>
+        <div class="stat"><div class="num" id="statCards">0</div><div class="lbl">flashcards ready</div></div>
+        <div class="stat"><div class="num" id="statSessions">0</div><div class="lbl">focus sessions today</div></div>
+      </div>
+      <div class="quote" id="dashQuote">"Well begun is half done."</div>
+    </section>
+
+    <!-- TIMER -->
+    <section class="tool" id="tool-timer">
+      <h2 class="tool-title">Focus Timer</h2>
+      <p class="tool-sub">25 minutes on, 5 minutes off. Every finished round counts toward today's total.</p>
+      <div class="timer-wrap">
+        <div class="timer-ring">
+          <svg viewBox="0 0 120 120">
+            <circle class="track" cx="60" cy="60" r="52"></circle>
+            <circle class="progress" id="ringProgress" cx="60" cy="60" r="52"
+              stroke-dasharray="326.7" stroke-dashoffset="0"></circle>
+          </svg>
+          <div class="timer-display">
+            <div class="t" id="timerText">25:00</div>
+            <div class="mode" id="timerMode">focus</div>
+          </div>
+        </div>
+        <div class="timer-controls">
+          <button class="btn" id="timerStart">Start</button>
+          <button class="btn ghost" id="timerReset">Reset</button>
+          <button class="btn ghost" id="timerSkip">Skip</button>
+        </div>
+        <div class="timer-meta" id="timerMeta">0 focus sessions completed today</div>
+      </div>
+    </section>
+
+    <!-- TASKS -->
+    <section class="tool" id="tool-tasks">
+      <h2 class="tool-title">Tasks</h2>
+      <p class="tool-sub">Add what's due. Check it off when it's done.</p>
+      <div class="row">
+        <input type="text" id="taskInput" placeholder="e.g. Finish chem lab report" style="flex:1; min-width:200px;">
+        <button class="btn" id="taskAdd">Add task</button>
+      </div>
+      <div class="filter-row" id="taskFilters">
+        <button class="small active" data-filter="all">All</button>
+        <button class="small" data-filter="active">Active</button>
+        <button class="small" data-filter="done">Done</button>
+      </div>
+      <ul class="tasklist" id="taskList"></ul>
+      <div class="empty" id="taskEmpty" style="display:none;">Nothing here yet — add your first task above.</div>
+    </section>
+
+    <!-- NOTES -->
+    <section class="tool" id="tool-notes">
+      <h2 class="tool-title">Notes</h2>
+      <p class="tool-sub">Quick notes for lectures, reminders, or ideas.</p>
+      <div class="row" style="margin-bottom:14px;">
+        <button class="btn" id="noteNew">New note</button>
+      </div>
+      <div class="notes-layout">
+        <div class="notes-list" id="notesList"></div>
+        <div class="note-editor" id="noteEditor" style="display:none;">
+          <input type="text" id="noteTitleInput" placeholder="Note title">
+          <textarea id="noteBodyInput" placeholder="Write here..."></textarea>
+          <div class="row">
+            <button class="btn pink" id="noteDelete">Delete note</button>
+          </div>
+        </div>
+      </div>
+      <div class="empty" id="notesEmpty" style="display:none;">No notes yet — click "New note" to start one.</div>
+    </section>
+
+    <!-- FLASHCARDS -->
+    <section class="tool" id="tool-flashcards">
+      <h2 class="tool-title">Flashcards</h2>
+      <p class="tool-sub">Build a deck, then flip through it to test yourself.</p>
+      <div class="flash-form">
+        <input type="text" id="cardFront" placeholder="Front (question / term)">
+        <input type="text" id="cardBack" placeholder="Back (answer / definition)">
+        <button class="btn" id="cardAdd">Add card</button>
+      </div>
+      <div class="flash-stage" id="flashStage" style="display:none;">
+        <div class="card3d" id="card3d">
+          <div class="card3d-inner">
+            <div class="card-face card-front" id="cardFrontFace">Front</div>
+            <div class="card-face card-back" id="cardBackFace">Back</div>
+          </div>
+        </div>
+        <div class="flash-nav">
+          <button class="btn ghost" id="cardPrev">◀ Prev</button>
+          <button class="btn ghost" id="cardShuffle">Shuffle</button>
+          <button class="btn ghost" id="cardNext">Next ▶</button>
+        </div>
+        <div class="flash-progress" id="flashProgress">Card 1 of 1</div>
+      </div>
+      <div class="empty" id="flashEmpty">No cards yet — add your first one above.</div>
+      <div class="flash-list" id="flashList"></div>
+    </section>
+
+    <!-- GRADES -->
+    <section class="tool" id="tool-grades">
+      <h2 class="tool-title">GPA Calculator</h2>
+      <p class="tool-sub">Add each course with its credit hours and letter grade.</p>
+      <table class="grades">
+        <thead>
+          <tr><th style="width:40%">Course</th><th style="width:20%">Credits</th><th style="width:25%">Grade</th><th></th></tr>
+        </thead>
+        <tbody id="gradesBody"></tbody>
+      </table>
+      <div class="row" style="margin-top:14px;">
+        <button class="btn" id="gradeAddRow">Add course</button>
+      </div>
+      <div class="gpa-result">
+        <div class="val" id="gpaValue">0.00</div>
+        <div class="lbl">GPA across <span id="gpaCredits">0</span> credit hours</div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="note">Everything here lives in this browser tab only — it resets if you reload the page.</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- shared state ---------------- */
+  const state = {
+    tasks: [],
+    notes: [],
+    activeNoteId: null,
+    cards: [],
+    cardIndex: 0,
+    courses: [],
+    sessionsToday: 0,
+    taskFilter: 'all',
+    nextId: 1
+  };
+  function uid(){ return state.nextId++; }
+
+  /* ---------------- tabs ---------------- */
+  const tabsNav = document.getElementById('tabs');
+  const tabButtons = Array.from(tabsNav.querySelectorAll('button[data-tab]'));
+  const underline = document.getElementById('tab-underline');
+
+  function positionUnderline(btn){
+    underline.style.width = btn.offsetWidth + 'px';
+    underline.style.left = btn.offsetLeft + 'px';
+  }
+
+  function activateTab(name){
+    tabButtons.forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+    document.querySelectorAll('section.tool').forEach(s => {
+      s.classList.toggle('active', s.id === 'tool-' + name);
+    });
+    const activeBtn = tabButtons.find(b => b.dataset.tab === name);
+    if (activeBtn) positionUnderline(activeBtn);
+    if (name === 'dashboard') renderDashboard();
+  }
+
+  tabButtons.forEach(btn => btn.addEventListener('click', () => activateTab(btn.dataset.tab)));
+  window.addEventListener('resize', () => {
+    const active = tabButtons.find(b => b.classList.contains('active'));
+    if (active) positionUnderline(active);
+  });
+  window.addEventListener('load', () => positionUnderline(tabButtons[0]));
+
+  /* ---------------- clock + greeting ---------------- */
+  function pad(n){ return n < 10 ? '0'+n : ''+n; }
+  function updateClock(){
+    const now = new Date();
+    document.getElementById('clockTime').textContent =
+      pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+    document.getElementById('clockDate').textContent =
+      now.toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' });
+
+    const h = now.getHours();
+    let greet = 'Good evening.';
+    if (h < 12) greet = 'Good morning.';
+    else if (h < 18) greet = 'Good afternoon.';
+    document.getElementById('greeting').textContent = greet;
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  const QUOTES = [
+    '"Well begun is half done."',
+    '"The expert in anything was once a beginner."',
+    '"Small steps every day beat big pushes once in a while."',
+    '"Focus on progress, not perfection."',
+    '"Review today what you learned today."',
+    '"Discipline is choosing between what you want now and what you want most."'
+  ];
+  document.getElementById('dashQuote').textContent = QUOTES[Math.floor(Math.random()*QUOTES.length)];
+
+  /* ---------------- dashboard ---------------- */
+  function renderDashboard(){
+    document.getElementById('statTasks').textContent = state.tasks.filter(t => !t.done).length;
+    document.getElementById('statNotes').textContent = state.notes.length;
+    document.getElementById('statCards').textContent = state.cards.length;
+    document.getElementById('statSessions').textContent = state.sessionsToday;
+  }
+
+  /* ================= TIMER ================= */
+  const FOCUS_SECONDS = 25*60;
+  const BREAK_SECONDS = 5*60;
+  let timerSeconds = FOCUS_SECONDS;
+  let timerTotal = FOCUS_SECONDS;
+  let timerMode = 'focus';
+  let timerRunning = false;
+  let timerInterval = null;
+
+  const timerText = document.getElementById('timerText');
+  const timerModeEl = document.getElementById('timerMode');
+  const ringProgress = document.getElementById('ringProgress');
+  const RING_CIRC = 326.7;
+  const timerMeta = document.getElementById('timerMeta');
+  const timerStartBtn = document.getElementById('timerStart');
+
+  function beep(){
+    try{
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.6);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.6);
+    }catch(e){ /* audio not available, silently skip */ }
+  }
+
+  function renderTimer(){
+    const m = Math.floor(timerSeconds/60);
+    const s = timerSeconds%60;
+    timerText.textContent = pad(m) + ':' + pad(s);
+    timerModeEl.textContent = timerMode === 'focus' ? 'focus' : 'break';
+    const frac = timerSeconds / timerTotal;
+    ringProgress.setAttribute('stroke-dashoffset', (RING_CIRC * (1-frac)).toFixed(1));
+    ringProgress.style.stroke = timerMode === 'focus' ? 'var(--chalk-yellow)' : 'var(--chalk-blue)';
+    timerMeta.textContent = state.sessionsToday + ' focus session' + (state.sessionsToday===1?'':'s') + ' completed today';
+  }
+
+  function switchMode(){
+    if (timerMode === 'focus'){
+      state.sessionsToday++;
+      timerMode = 'break';
+      timerTotal = BREAK_SECONDS;
+    } else {
+      timerMode = 'focus';
+      timerTotal = FOCUS_SECONDS;
+    }
+    timerSeconds = timerTotal;
+    beep();
+    renderTimer();
+    renderDashboard();
+  }
+
+  function tick(){
+    timerSeconds--;
+    if (timerSeconds <= 0){
+      switchMode();
+    } else {
+      renderTimer();
+    }
+  }
+
+  timerStartBtn.addEventListener('click', () => {
+    timerRunning = !timerRunning;
+    if (timerRunning){
+      timerInterval = setInterval(tick, 1000);
+      timerStartBtn.textContent = 'Pause';
+    } else {
+      clearInterval(timerInterval);
+      timerStartBtn.textContent = 'Start';
+    }
+  });
+  document.getElementById('timerReset').addEventListener('click', () => {
+    clearInterval(timerInterval);
+    timerRunning = false;
+    timerStartBtn.textContent = 'Start';
+    timerMode = 'focus';
+    timerTotal = FOCUS_SECONDS;
+    timerSeconds = FOCUS_SECONDS;
+    renderTimer();
+  });
+  document.getElementById('timerSkip').addEventListener('click', () => { switchMode(); });
+  renderTimer();
+
+  /* ================= TASKS ================= */
+  const taskInput = document.getElementById('taskInput');
+  const taskList = document.getElementById('taskList');
+  const taskEmpty = document.getElementById('taskEmpty');
+
+  function addTask(){
+    const val = taskInput.value.trim();
+    if (!val) return;
+    state.tasks.push({ id: uid(), text: val, done: false });
+    taskInput.value = '';
+    renderTasks();
+    renderDashboard();
+  }
+  document.getElementById('taskAdd').addEventListener('click', addTask);
+  taskInput.addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
+
+  document.getElementById('taskFilters').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-filter]');
+    if (!btn) return;
+    state.taskFilter = btn.dataset.filter;
+    Array.from(document.querySelectorAll('#taskFilters button')).forEach(b =>
+      b.classList.toggle('active', b === btn));
+    renderTasks();
+  });
+
+  function renderTasks(){
+    let items = state.tasks;
+    if (state.taskFilter === 'active') items = items.filter(t => !t.done);
+    if (state.taskFilter === 'done') items = items.filter(t => t.done);
+
+    taskList.innerHTML = '';
+    items.forEach(t => {
+      const li = document.createElement('li');
+      li.className = t.done ? 'done' : '';
+      li.innerHTML =
+        '<input type="checkbox" ' + (t.done ? 'checked' : '') + '>' +
+        '<span class="txt"></span>' +
+        '<button class="icon-x" title="Delete">✕</button>';
+      li.querySelector('.txt').textContent = t.text;
+      li.querySelector('input').addEventListener('change', () => {
+        t.done = !t.done; renderTasks(); renderDashboard();
+      });
+      li.querySelector('.icon-x').addEventListener('click', () => {
+        state.tasks = state.tasks.filter(x => x.id !== t.id);
+        renderTasks(); renderDashboard();
+      });
+      taskList.appendChild(li);
+    });
+    taskEmpty.style.display = items.length ? 'none' : 'block';
+  }
+  renderTasks();
+
+  /* ================= NOTES ================= */
+  const notesList = document.getElementById('notesList');
+  const notesEmpty = document.getElementById('notesEmpty');
+  const noteEditor = document.getElementById('noteEditor');
+  const noteTitleInput = document.getElementById('noteTitleInput');
+  const noteBodyInput = document.getElementById('noteBodyInput');
+
+  document.getElementById('noteNew').addEventListener('click', () => {
+    const note = { id: uid(), title: 'Untitled note', body: '', date: new Date().toLocaleDateString() };
+    state.notes.unshift(note);
+    state.activeNoteId = note.id;
+    renderNotes();
+    renderDashboard();
+    noteTitleInput.focus();
+  });
+
+  function selectNote(id){
+    state.activeNoteId = id;
+    renderNotes();
+  }
+
+  function currentNote(){
+    return state.notes.find(n => n.id === state.activeNoteId);
+  }
+
+  noteTitleInput.addEventListener('input', () => {
+    const n = currentNote(); if (!n) return;
+    n.title = noteTitleInput.value || 'Untitled note';
+    renderNotesListOnly();
+  });
+  noteBodyInput.addEventListener('input', () => {
+    const n = currentNote(); if (!n) return;
+    n.body = noteBodyInput.value;
+  });
+  document.getElementById('noteDelete').addEventListener('click', () => {
+    state.notes = state.notes.filter(n => n.id !== state.activeNoteId);
+    state.activeNoteId = state.notes.length ? state.notes[0].id : null;
+    renderNotes();
+    renderDashboard();
+  });
+
+  function renderNotesListOnly(){
+    Array.from(notesList.children).forEach(child => {
+      const id = Number(child.dataset.id);
+      const n = state.notes.find(x => x.id === id);
+      if (n){
+        child.querySelector('.nt').textContent = n.title;
+      }
+    });
+  }
+
+  function renderNotes(){
+    notesList.innerHTML = '';
+    state.notes.forEach(n => {
+      const div = document.createElement('div');
+      div.className = 'note-item' + (n.id === state.activeNoteId ? ' active' : '');
+      div.dataset.id = n.id;
+      div.innerHTML = '<div class="nt"></div><div class="nd"></div>';
+      div.querySelector('.nt').textContent = n.title;
+      div.querySelector('.nd').textContent = n.date;
+      div.addEventListener('click', () => selectNote(n.id));
+      notesList.appendChild(div);
+    });
+    notesEmpty.style.display = state.notes.length ? 'none' : 'block';
+
+    const active = currentNote();
+    if (active){
+      noteEditor.style.display = 'flex';
+      noteTitleInput.value = active.title === 'Untitled note' ? '' : active.title;
+      noteTitleInput.placeholder = 'Note title';
+      noteBodyInput.value = active.body;
+    } else {
+      noteEditor.style.display = 'none';
+    }
+  }
+  renderNotes();
+
+  /* ================= FLASHCARDS ================= */
+  const flashStage = document.getElementById('flashStage');
+  const flashEmpty = document.getElementById('flashEmpty');
+  const card3d = document.getElementById('card3d');
+  const cardFrontFace = document.getElementById('cardFrontFace');
+  const cardBackFace = document.getElementById('cardBackFace');
+  const flashProgress = document.getElementById('flashProgress');
+  const flashList = document.getElementById('flashList');
+
+  document.getElementById('cardAdd').addEventListener('click', () => {
+    const front = document.getElementById('cardFront').value.trim();
+    const back = document.getElementById('cardBack').value.trim();
+    if (!front || !back) return;
+    state.cards.push({ id: uid(), front, back });
+    document.getElementById('cardFront').value = '';
+    document.getElementById('cardBack').value = '';
+    state.cardIndex = state.cards.length - 1;
+    renderFlashcards();
+    renderDashboard();
+  });
+
+  card3d.addEventListener('click', () => card3d.classList.toggle('flipped'));
+
+  document.getElementById('cardNext').addEventListener('click', () => {
+    if (!state.cards.length) return;
+    state.cardIndex = (state.cardIndex + 1) % state.cards.length;
+    card3d.classList.remove('flipped');
+    renderFlashcards();
+  });
+  document.getElementById('cardPrev').addEventListener('click', () => {
+    if (!state.cards.length) return;
+    state.cardIndex = (state.cardIndex - 1 + state.cards.length) % state.cards.length;
+    card3d.classList.remove('flipped');
+    renderFlashcards();
+  });
+  document.getElementById('cardShuffle').addEventListener('click', () => {
+    for (let i = state.cards.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i+1));
+      [state.cards[i], state.cards[j]] = [state.cards[j], state.cards[i]];
+    }
+    state.cardIndex = 0;
+    card3d.classList.remove('flipped');
+    renderFlashcards();
+  });
+
+  function renderFlashcards(){
+    const has = state.cards.length > 0;
+    flashStage.style.display = has ? 'flex' : 'none';
+    flashEmpty.style.display = has ? 'none' : 'block';
+    if (has){
+      const c = state.cards[state.cardIndex];
+      cardFrontFace.textContent = c.front;
+      cardBackFace.textContent = c.back;
+      flashProgress.textContent = 'Card ' + (state.cardIndex+1) + ' of ' + state.cards.length;
+    }
+    flashList.innerHTML = '';
+    state.cards.forEach((c, idx) => {
+      const div = document.createElement('div');
+      div.className = 'fl-item';
+      div.innerHTML = '<span></span><button class="icon-x" title="Delete">✕</button>';
+      div.querySelector('span').textContent = c.front + '  →  ' + c.back;
+      div.querySelector('.icon-x').addEventListener('click', () => {
+        state.cards = state.cards.filter(x => x.id !== c.id);
+        if (state.cardIndex >= state.cards.length) state.cardIndex = Math.max(0, state.cards.length - 1);
+        renderFlashcards();
+        renderDashboard();
+      });
+      flashList.appendChild(div);
+    });
+  }
+  renderFlashcards();
+
+  /* ================= GRADES / GPA ================= */
+  const gradePoints = { 'A':4.0, 'A-':3.7, 'B+':3.3, 'B':3.0, 'B-':2.7, 'C+':2.3, 'C':2.0, 'C-':1.7, 'D':1.0, 'F':0.0 };
+  const gradesBody = document.getElementById('gradesBody');
+
+  function addCourse(prefill){
+    state.courses.push(prefill || { id: uid(), name: '', credits: 3, grade: 'A' });
+    renderGrades();
+  }
+
+  function renderGrades(){
+    gradesBody.innerHTML = '';
+    state.courses.forEach(c => {
+      const tr = document.createElement('tr');
+
+      const tdName = document.createElement('td');
+      const nameInput = document.createElement('input');
+      nameInput.type = 'text';
+      nameInput.placeholder = 'Course name';
+      nameInput.value = c.name;
+      nameInput.addEventListener('input', () => { c.name = nameInput.value; });
+      tdName.appendChild(nameInput);
+
+      const tdCredits = document.createElement('td');
+      const creditsInput = document.createElement('input');
+      creditsInput.type = 'number';
+      creditsInput.min = '0';
+      creditsInput.step = '0.5';
+      creditsInput.value = c.credits;
+      creditsInput.addEventListener('input', () => { c.credits = parseFloat(creditsInput.value) || 0; computeGPA(); });
+      tdCredits.appendChild(creditsInput);
+
+      const tdGrade = document.createElement('td');
+      const sel = document.createElement('select');
+      Object.keys(gradePoints).forEach(g => {
+        const opt = document.createElement('option');
+        opt.value = g; opt.textContent = g;
+        if (g === c.grade) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      sel.addEventListener('change', () => { c.grade = sel.value; computeGPA(); });
+      tdGrade.appendChild(sel);
+
+      const tdDel = document.createElement('td');
+      const delBtn = document.createElement('button');
+      delBtn.className = 'icon-x'; delBtn.textContent = '✕';
+      delBtn.addEventListener('click', () => {
+        state.courses = state.courses.filter(x => x.id !== c.id);
+        renderGrades();
+      });
+      tdDel.appendChild(delBtn);
+
+      tr.appendChild(tdName); tr.appendChild(tdCredits); tr.appendChild(tdGrade); tr.appendChild(tdDel);
+      gradesBody.appendChild(tr);
+    });
+    computeGPA();
+  }
+
+  function computeGPA(){
+    let totalPoints = 0, totalCredits = 0;
+    state.courses.forEach(c => {
+      const pts = gradePoints[c.grade] ?? 0;
+      const cr = c.credits || 0;
+      totalPoints += pts * cr;
+      totalCredits += cr;
+    });
+    const gpa = totalCredits > 0 ? (totalPoints / totalCredits) : 0;
+    document.getElementById('gpaValue').textContent = gpa.toFixed(2);
+    document.getElementById('gpaCredits').textContent = totalCredits;
+  }
+
+  document.getElementById('gradeAddRow').addEventListener('click', () => addCourse());
+  // seed with one empty row so the tool isn't blank on first view
+  addCourse();
+
+  /* ---------------- init ---------------- */
+  renderDashboard();
+
+})();
+</script>
+</body>
+</html>
